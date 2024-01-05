@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIDO Registration</title>
+</head>
+<body>
+
+    <h1>FIDO Registration Example</h1>
+
+    <!-- Importing the JavaScript file -->
+    <script src="fidoRegistration.js"></script>
+
+    <b>Dados do Usuário</b><br>
+
+    ID: <div id="user_id"></div>
+    Name: <input type="text" id="user_name" value="Teste" required/><br>
+    Display Name: <input type="text" id="user_display_name" value="Teste" required/><br>
+    Mobile: <div id="resultContainerUA"></div><br>
+
+    <b>Dados da Relying Party</b><br>
+
+    ID: <input type="text" id="rp_id" value="" required readonly/><br>
+    Name: <input type="text" id="rp_name" value="RP_Name" required/><br>
+    Origin: <div id="resultContainerOrigin"></div><br>
+
+    
+    <!-- Button to trigger the register function -->
+    <button onclick="callRegisterFunction()">Register</button>
+
+    <!-- Button to trigger the register function -->
+    <button onclick="callAuthenticateFunction()">Authenticate</button>
+    
+    <!-- Container to display the result -->
+    <div id="resultContainer"></div>
+
+    <!-- Container to display the result -->
+    <div id="resultContainerAuth"></div>
+
+    <script>
+        document.getElementById('resultContainerUA').innerText = navigator.userAgentData.mobile;
+        document.getElementById('resultContainerOrigin').innerText = document.location.origin;
+        document.getElementById('rp_id').value = document.location.host;
+        async function callRegisterFunction() {
+            try {
+                const result = await register();
+                document.getElementById('resultContainer').innerText = 'Registration result: ' + JSON.stringify(result);
+            } catch (error) {
+                console.error('Error during registration:', error);
+            }
+        }
+
+        async function callAuthenticateFunction() {
+            try {
+                const result = await authenticate();
+                    document.getElementById('resultContainerAuth').innerText = 'Authentication result: ' + result;
+            } catch (error) {
+                console.error('Error during registration:', error);
+            }
+        }
+    </script>
+
+</body>
+</html>
