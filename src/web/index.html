@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIDO Server Test Client</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js"></script>
+</head>
+<body>
+    <div class="top-section">
+        <h1>FIDO Server Test Client</h1>
+        <button class="reiniciar-button" onclick="clearLogContent()">Limpar Logs</button>
+        <div class="button-container">
+            <button onclick="dcr()">DCR</button>
+            <button onclick="vincularDispositivoStep1()" id="btnVincularDispositivo" disabled>Vincular Dispositivo</button>
+            <button onclick="executarTransacao()" id="btnExecutarTransacao" disabled>Executar Transação</button>
+        </div>
+    </div>
+    <div class="bottom-section" id="logContainer">
+    </div>
+</body>
+</html>

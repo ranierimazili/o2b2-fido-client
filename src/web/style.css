@@ -1,0 +1,94 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+.top-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 50%;
+    background-color: #f0f0f0;
+    position: relative;
+}
+.top-section h1 {
+    margin: 0;
+}
+.top-section .button-container {
+    margin-top: 20px;
+    display: flex;
+}
+.top-section .button-container button {
+    margin: 0 10px;
+    padding: 15px 30px;
+    font-size: 18px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007BFF;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+.top-section .button-container button:hover {
+    background-color: #0056b3;
+}
+
+.top-section .button-container button:disabled {
+    background-color: #ccc; /* Cor de fundo */
+    color: #666; /* Cor do texto */
+    cursor: not-allowed; /* Cursor */
+}
+
+.top-section .reiniciar-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 10px 20px;
+    font-size: 14px;
+    border: none;
+    border-radius: 5px;
+    background-color: #FF4136;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+.top-section .reiniciar-button:hover {
+    background-color: #c12c26;
+}
+.bottom-section {
+    height: 50%;
+    background-color: #000;
+    color: white;
+    padding: 10px;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    overflow-y: auto;
+}
+
+.bottom-section > p {
+    font-weight: bold;
+    
+}
+
+.bottom-section pre {
+    white-space: pre-wrap; /* Mantém os espaços e quebras de linha, mas permite quebra de linha automática */
+    word-wrap: break-word; /* Garante que palavras longas sejam quebradas */
+}
+/* Media query for small screens */
+@media (max-width: 600px) {
+    .top-section .button-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    .top-section .button-container button {
+        margin: 10px 0;
+        width: 80%;
+    }
+    .top-section .reiniciar-button {
+        top: 20px;
+        right: 20px;
+    }
+}
