@@ -18,6 +18,7 @@ const options = {
     rejectUnauthorized: false
 };
 
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/', routes);
 

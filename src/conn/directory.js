@@ -28,8 +28,12 @@ export const createToken = async function() {
         httpsAgent: agent
     };
 
-    const response = await axios(config.directory.tokenHost, requestOptions);
-    return response.data;
+    try {
+        const response = await axios(config.directory.tokenHost, requestOptions);
+        return [ response.status == 200, response.data ];
+    } catch (error) {
+        return [ false, error ];
+    }
 }
 
 export const createSSA = async function(token) {
@@ -50,6 +54,10 @@ export const createSSA = async function(token) {
         httpsAgent: agent
     };
 
-    const response = await axios(`${config.directory.assertionHost}/organisations/${config.directory.organisationId}/softwarestatements/${config.directory.softwareStatement.id}/assertion`, requestOptions);
-    return response.data;
+    try {
+        const response = await axios(`${config.directory.assertionHost}/organisations/${config.directory.organisationId}/softwarestatements/${config.directory.softwareStatement.id}/assertion`, requestOptions);
+        return [ response.status == 200, response.data ];
+    } catch (error) {
+        return [ false, error ];
+    }
 }

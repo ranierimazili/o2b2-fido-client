@@ -3,6 +3,16 @@ import { createPrivateKey } from 'crypto';
 import fs from 'fs';
 import config from "./config.js";
 import { v4 } from "uuid";
+import { X509Certificate } from 'node:crypto';
+
+export const getSubjectFromCert = function(pemCert) {
+    const x509Cert = new X509Certificate(pemCert, 'base64');
+    return x509Cert.subject.split('\n').join(',');
+}
+
+export const createResponseMessage = function(message, details, success, redirect = undefined) {
+    return { message, details, success, redirect };
+}
 
 export const getPrivateSigningKey = function getPrivateSigningKey() {
     const signingKey = fs.readFileSync('./src/certs/signing.key');

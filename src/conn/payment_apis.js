@@ -53,9 +53,9 @@ export const createEnrollment = async function(token) {
 
     try {
         const response = await axios(endpoint, requestOptions);
-        return decodeJwt(response.data).data;
-    } catch (e) {
-        return e.response.data;
+        return [ response.status == 201, decodeJwt(response.data).data ];
+    } catch (error) {
+        return [ false, error ];
     }
 }
 
@@ -120,15 +120,15 @@ export const sendRiskSignals = async function(token, enrollment) {
 
     try {
         const response = await axios(endpoint, requestOptions);
-        // aqui posso retornar ao invés de apenas response, um variavel sucess e outra response [response, success], onde success é baseado no status code esperado
-        return response;
-    } catch (e) {
-        return e.response.data;
+        return [ response.status == 204, null ];
+    } catch (error) {
+        return [ false, error ];
     }
 }
 
-export const getFidoRegistrationOptions = async function(token, enrollment) {
+export const getFidoRegistrationOptions = async function(token, enrollment, platform) {
     const [publicKey, privateKey] = utils.getTransportKeys();
+    const subject = utils.getSubjectFromCert(publicKey);
     
     const agent = new https.Agent({
         cert: publicKey,
@@ -138,8 +138,8 @@ export const getFidoRegistrationOptions = async function(token, enrollment) {
 
     const data = {
         "data": {
-            "rp": "RaniBank",
-            "platform": "BROWSER"
+            "rp": subject,
+            platform
         }
     }
 
@@ -161,8 +161,10 @@ export const getFidoRegistrationOptions = async function(token, enrollment) {
 
     try {
         const response = await axios(endpoint, requestOptions);
-        return decodeJwt(response.data).data;
-    } catch (e) {
-        return e.response.data;
+        return [ response.status == 201, decodeJwt(response.data).data ];
+    } catch (error) {
+        return [ false, error ];
     }
 }
+
+//criar o método createFidoRegistration

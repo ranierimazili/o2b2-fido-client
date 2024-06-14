@@ -40,11 +40,11 @@ export const dcr = async function(ssa, registrationEndpoint) {
         httpsAgent: agent
     };
 
-    try {
+	try {
         const response = await axios(registrationEndpoint, requestOptions);
-        return response.data;
-    } catch (e) {
-        return e.response.data;
+        return [ response.status == 201, response.data ];
+    } catch (error) {
+        return [ false, error ];
     }
 }
 
@@ -75,11 +75,11 @@ export const createCCToken = async function(client, tokenEndpoint) {
 	};
 
 	try {
-		const response = await axios(tokenEndpoint, requestOptions);
-		return response.data;
-	} catch (e) {
-		return e.response.data;
-	}
+        const response = await axios(tokenEndpoint, requestOptions);
+        return [ response.status == 200, response.data ];
+    } catch (error) {
+        return [ false, error ];
+    }
 }
 
 export const exchangeCode = async function(client, tokenEndpoint, code) {
@@ -111,11 +111,11 @@ export const exchangeCode = async function(client, tokenEndpoint, code) {
 	};
 
 	try {
-		const response = await axios(tokenEndpoint, requestOptions);
-		return response.data;
-	} catch (e) {
-		return e.response.data;
-	}
+        const response = await axios(tokenEndpoint, requestOptions);
+        return [ response.status == 200, response.data ];
+    } catch (error) {
+        return [ false, error ];
+    }
 	
 }
 
@@ -180,11 +180,11 @@ export const par = async function(client, parEndpoint, issuer, enrollment, state
 	};
 
 	try {
-		const response = await axios(parEndpoint, requestOptions);
-		return response.data;
-	} catch (e) {
-		return e.response.data;
-	}
+        const response = await axios(parEndpoint, requestOptions);
+        return [ response.status == 201, response.data ];
+    } catch (error) {
+        return [ false, error ];
+    }
 }
 
 const createPARRequestObject = async function(client, audience, enrollment, state) {
