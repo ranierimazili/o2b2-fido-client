@@ -119,7 +119,7 @@ export const exchangeCode = async function(client, tokenEndpoint, code) {
 	
 }
 
-export const createRTToken = async function(client, tokenEndpoint) {
+export const createRTToken = async function(client, tokenEndpoint, refresh_token) {
 	const [publicKey, privateKey] = utils.getTransportKeys();
 	const clientAssertion = await createClientAssertion(client, tokenEndpoint);
 
@@ -130,8 +130,8 @@ export const createRTToken = async function(client, tokenEndpoint) {
 	});
 
   	const data = new URLSearchParams();
-	data.append("grant_type", "client_credentials");
-	data.append("scope", "payments");
+	data.append("grant_type", "refresh_token");
+	data.append("refresh_token", refresh_token);
 	data.append("client_assertion", clientAssertion);
 	data.append("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
 
@@ -146,11 +146,11 @@ export const createRTToken = async function(client, tokenEndpoint) {
 	};
 
 	try {
-		const response = await axios(tokenEndpoint, requestOptions);
-		return response.data;
-	} catch (e) {
-		return e.response.data;
-	}
+        const response = await axios(tokenEndpoint, requestOptions);
+        return [ response.status == 200, response.data ];
+    } catch (error) {
+        return [ false, error ];
+    }
 }
 
 export const par = async function(client, parEndpoint, issuer, enrollment, state) {

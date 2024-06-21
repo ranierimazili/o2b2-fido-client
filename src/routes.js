@@ -111,6 +111,9 @@ router.post('/vincularDispositivo/step2/:id', async (req, res) => {
             [ success , fidoRegistratrationOptions ] = await paymentApis.getFidoRegistrationOptions(rtToken.access_token, data.enrollment, req.body.platform);
             responses.push(utils.createResponseMessage("Obtendo FIDO registration options...", JSON.stringify(fidoRegistratrationOptions, null, 2), success));
         }
+
+        data.refresh_token = rtToken;
+        db.save(req.params.id, data);
         
         res.status(200).send(responses);
     }
@@ -118,6 +121,109 @@ router.post('/vincularDispositivo/step2/:id', async (req, res) => {
 
 //Fazer este método para mandar o fido registration para o servidor fido
 router.post('/vincularDispositivo/step3/:id', async (req, res) => {
+    let data = db.get(req.params.id);
+    let success, rtToken, fidoRegistratration, responses = [];
+
+    //Consulta o well-known para utilizar as rotas de token, dcr, par, etc, nas chamadas futuras.
+    const openIDDiscoveryDocument = await utils.getOpenIDDiscoveryDocument();
+
+    [ success , rtToken ] = await authServer.createRTToken(data.dcr, openIDDiscoveryDocument?.mtls_endpoint_aliases?.token_endpoint || openIDDiscoveryDocument.token_endpoint, data.refresh_token.refresh_token);
+    responses.push(utils.createResponseMessage("Obtendo refresh_token no authorization server...", JSON.stringify(rtToken, null, 2), success));
+
+    if (success) {
+        [ success , fidoRegistratration ] = await paymentApis.createFidoRegistration(rtToken.access_token, data.enrollment, req.body);
+        responses.push(utils.createResponseMessage("Registrando dispositivo no servidor FIDO...", JSON.stringify(fidoRegistratration, null, 2), success));
+    }
+    
+    res.status(200).send(responses);
+    
+});
+
+//Fazer este método para mandar o fido registration para o servidor fido
+router.post('/pagamento/step1/:id', async (req, res) => {
+    let data = db.get(req.params.id);
+    let success, ccToken, paymentConsent, fidoSignOptions, responses = [];
+    const client = data.dcr;
+    const enrollment = data.enrollment;
+
+    //Consulta o well-known para utilizar as rotas de token, dcr, par, etc, nas chamadas futuras.
+    const openIDDiscoveryDocument = await utils.getOpenIDDiscoveryDocument();
+
+    [ success , ccToken ] = await authServer.createCCToken(client, openIDDiscoveryDocument?.mtls_endpoint_aliases?.token_endpoint || openIDDiscoveryDocument.token_endpoint);
+    responses.push(utils.createResponseMessage("Criando token client credentials no authorization server...", JSON.stringify(ccToken, null, 2), success));
+
+    if (success) {
+        [ success , paymentConsent ] = await paymentApis.createPaymentConsent(ccToken.access_token);
+        responses.push(utils.createResponseMessage("Criando consentimento de pagamento...", JSON.stringify(paymentConsent, null, 2), success));
+    }
+
+    //FIDO sign options
+    if (success) {
+        [ success , fidoSignOptions ] = await paymentApis.getFidoSignOptions(ccToken.access_token, enrollment, req.body.platform);
+        responses.push(utils.createResponseMessage("Obtendo FIDO Sign Options no servidor FIDO...", JSON.stringify(fidoSignOptions, null, 2), success));
+    }
+
+    data.paymentConsent = paymentConsent;
+    data.fidoSignOptions = fidoSignOptions;
+
+    db.save(req.params.id, data);
+
+    res.status(200).send(responses);
+
+
+    /*let success, rtToken, fidoRegistratration, responses = [];
+
+    //Consulta o well-known para utilizar as rotas de token, dcr, par, etc, nas chamadas futuras.
+    const openIDDiscoveryDocument = await utils.getOpenIDDiscoveryDocument();
+
+    [ success , rtToken ] = await authServer.createRTToken(data.dcr, openIDDiscoveryDocument?.mtls_endpoint_aliases?.token_endpoint || openIDDiscoveryDocument.token_endpoint, data.refresh_token.refresh_token);
+    responses.push(utils.createResponseMessage("Obtendo refresh_token no authorization server...", JSON.stringify(rtToken, null, 2), success));
+
+    if (success) {
+        [ success , fidoRegistratration ] = await paymentApis.createFidoRegistration(rtToken.access_token, data.enrollment, req.body);
+        responses.push(utils.createResponseMessage("Registrando dispositivo no servidor FIDO...", JSON.stringify(fidoRegistratration, null, 2), success));
+    }
+    
+    res.status(200).send(responses);*/
+    
+});
+
+router.post('/pagamento/step2/:id', async (req, res) => {
+    let data = db.get(req.params.id);
+    let success, rtToken, authoriseConsent, responses = [];
+    //const client = data.dcr;
+    const enrollment = data.enrollment;
+    const paymentConsent = data.paymentConsent;
+
+    //Consulta o well-known para utilizar as rotas de token, dcr, par, etc, nas chamadas futuras.
+    const openIDDiscoveryDocument = await utils.getOpenIDDiscoveryDocument();
+
+    [ success , rtToken ] = await authServer.createRTToken(data.dcr, openIDDiscoveryDocument?.mtls_endpoint_aliases?.token_endpoint || openIDDiscoveryDocument.token_endpoint, data.refresh_token.refresh_token);
+    responses.push(utils.createResponseMessage("Obtendo refresh_token no authorization server...", JSON.stringify(rtToken, null, 2), success));
+
+    if (success) {
+        [ success , authoriseConsent ] = await paymentApis.authoriseConsent(rtToken.access_token, enrollment, paymentConsent, req.body.fidoAssertion);
+        responses.push(utils.createResponseMessage("Autorizando consentimento de pagamento...", JSON.stringify(authoriseConsent, null, 2), success));
+    }
+
+    res.status(200).send(responses);
+    /*
+    if (success) {
+        [ success , paymentConsent ] = await paymentApis.createPaymentConsent(ccToken.access_token);
+        responses.push(utils.createResponseMessage("Criando consentimento de pagamento...", JSON.stringify(paymentConsent, null, 2), success));
+    }
+
+    //FIDO sign options
+    if (success) {
+        [ success , fidoSignOptions ] = await paymentApis.getFidoSignOptions(ccToken.access_token, enrollment, req.body.platform);
+        responses.push(utils.createResponseMessage("Obtendo FIDO Sign Options no servidor FIDO...", JSON.stringify(fidoSignOptions, null, 2), success));
+    }
+
+    res.status(200).send(responses);
+    */
+
+
+    
     
 });
 

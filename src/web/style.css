@@ -18,6 +18,9 @@ body {
 .top-section h1 {
     margin: 0;
 }
+.error {
+    color: orangered;
+}
 .top-section .button-container {
     margin-top: 20px;
     display: flex;

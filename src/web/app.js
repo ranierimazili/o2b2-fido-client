@@ -1,4 +1,4 @@
-let id;
+let id, authWindow;
 
 function getPlatform() {
     // Check if navigator.userAgentData is available
@@ -89,6 +89,22 @@ const base64ToArrayBuffer = function(base64String) {
     return arrayBuffer;
 }
 
+const arrayBufferToBase64url = function(arrayBuffer) {
+    // Step 1: Convert ArrayBuffer to Uint8Array
+    const uint8Array = new Uint8Array(arrayBuffer);
+
+    // Step 2: Encode Uint8Array to Base64
+    const base64 = btoa(String.fromCharCode.apply(null, uint8Array));
+
+    // Step 3: Make Base64 URL-safe
+    const base64url = base64
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+
+    return base64url;
+}
+
 function getLogContainer() {
     return document.getElementById('logContainer');
 }
@@ -133,11 +149,16 @@ function addLogSubHeader(text) {
 }
 
 function addLogContent(responses) {
-    for (var i=0;i<responses.length;i++) {
+    for (var i = 0; i < responses.length; i++) {
         addLogSubHeader(responses[i].message);
 
         const pre = document.createElement('pre');
         pre.textContent = responses[i].details;
+
+        if (!responses[i].success) {
+            pre.classList.add('error');
+        }
+
         const logContainer = getLogContainer();
         logContainer.appendChild(pre);
     }
@@ -172,13 +193,25 @@ async function solicitarAutenticacaoParaVinculo(registrationOptions) {
         const credential = await navigator.credentials.create({
             publicKey: publicKeyCredentialCreationOptions
         });
-        console.log("Usuário autenticado...");
         vincularDispositivoStep3(credential);
-        //const fidoRegistrationResponse = await callFidoRegistration(credential);
-        //return fidoRegistrationResponse;
     } catch (error) {
         console.log("Erro ao tentar autenticar o usuário", error);
     }
+}
+
+async function solicitarAutenticacaoParaPagamento(signOptions) {
+    console.log("signOptions", signOptions);
+    const publicKeyCredentialRequestOptions = {...signOptions};
+    publicKeyCredentialRequestOptions.challenge = base64ToArrayBuffer(publicKeyCredentialRequestOptions.challenge);
+    publicKeyCredentialRequestOptions.allowCredentials[0].id = base64ToArrayBuffer(publicKeyCredentialRequestOptions.allowCredentials[0].id)
+
+    const credential = await navigator.credentials.get({
+        publicKey: publicKeyCredentialRequestOptions
+    });
+
+    console.log("authentication credential", credential);
+
+    executarTransacaoPasso2(credential);
 }
 
 async function dcr() {
@@ -224,7 +257,7 @@ async function vincularDispositivoStep1() {
         const jsonResponse = await response.json();
         addLogContent(jsonResponse);
 
-        window.open(jsonResponse[jsonResponse.length-1].redirect, '_blank');
+        authWindow = window.open(jsonResponse[jsonResponse.length-1].redirect, '_blank');
         vincularDispositivoStep2();
         
     } catch (e) {
@@ -253,7 +286,9 @@ async function vincularDispositivoStep2() {
         if (jsonResponse.length == 1 && jsonResponse[0].success == false) {
             setTimeout(vincularDispositivoStep2, 5000);
         } else {
-            solicitarAutenticacaoParaVinculo(JSON.parse(jsonResponse[jsonResponse.length-1].details));
+            authWindow.close();
+            setTimeout(function() { solicitarAutenticacaoParaVinculo(JSON.parse(jsonResponse[jsonResponse.length-1].details)) }, 2000);
+            
         }
     } catch (e) {
         addLogContent(e);
@@ -263,35 +298,103 @@ async function vincularDispositivoStep2() {
 async function vincularDispositivoStep3(credential) {
     addLogHeader("Enviando credenciais para o servidor FIDO...");
 
-    /*try {
+    try {
+        const parsedCredential = {
+            id: credential.id, //pode remover esta linha???
+            rawId: arrayBufferToBase64url(credential.rawId),
+            response: {
+                attestationObject: arrayBufferToBase64url(credential.response.attestationObject),
+                clientDataJSON: arrayBufferToBase64url(credential.response.clientDataJSON),
+                type: "public-key"
+            }
+        }
+
+        const myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+
+        var requestOptions = {
+            method: 'POST',
+            headers: myHeaders,
+            body: JSON.stringify(parsedCredential),
+            redirect: 'follow',
+            rejectUnauthorized: false
+        };
+
+        const response = await fetch('/vincularDispositivo/step3/'+id, requestOptions);
+        const jsonResponse = await response.json();
+        
+        addLogContent(jsonResponse);
+        enableButton("btnExecutarTransacao");
+    } catch (e) {
+        addLogContent(e);
+    }
+}
+
+
+
+async function executarTransacaoPasso1() {
+    addLogHeader("Executando transação (Passo 1)...");
+
+    addLogHeader("Aguardando aprovação do consentimento...");
+
+    try {
         const myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
         const requestOptions = {
             method: 'POST',
             headers: myHeaders,
-            body: null,
+            body: JSON.stringify({ platform: getPlatform() }),
             redirect: 'follow',
             rejectUnauthorized: false
         };
 
-        const response = await fetch('/vincularDispositivo/step2/'+id, requestOptions);
+        const response = await fetch('/pagamento/step1/'+id, requestOptions);
         const jsonResponse = await response.json();
-        console.log(jsonResponse);
-        if (jsonResponse.length == 1 && jsonResponse[0].success == false) {
-            //agenda para daqui 5 segundos novamente
-            console.log("daqui 5 segundos fazer de novo")
-            setTimeout(vincularDispositivoStep2, 5000);
-        }
         addLogContent(jsonResponse);
-        //console.log(JSON.parse(jsonResponse[jsonResponse.length-1].details));
-        solicitarAutenticacaoParaVinculo(JSON.parse(jsonResponse[jsonResponse.length-1].details));
+
+        //TODO antes de chamar a linha abaixo, verificar se deu sucesso em tudo
+        solicitarAutenticacaoParaPagamento(JSON.parse(jsonResponse[jsonResponse.length-1].details));
     } catch (e) {
         addLogContent(e);
-    }*/
+    }
 }
 
+async function executarTransacaoPasso2(credential) {
+    addLogHeader("Executando transação (Passo 2)...");
 
+    //continuar a partir daqui
+    try {
+        const parsedCredential = {
+            fidoAssertion: {
+                id: arrayBufferToBase64url(credential.rawId),
+                rawId: arrayBufferToBase64url(credential.rawId),
+                response: {
+                    authenticatorData: arrayBufferToBase64url(credential.response.authenticatorData),
+                    clientDataJSON: arrayBufferToBase64url(credential.response.clientDataJSON),
+                    signature: arrayBufferToBase64url(credential.response.signature)
+                },
+                type: credential.type
+            }
+        };
 
-async function executarTransacao() {
-    addLogHeader("Executando transação...");
+        const myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+
+        var requestOptions = {
+            method: 'POST',
+            headers: myHeaders,
+            body: JSON.stringify(parsedCredential),
+            redirect: 'follow',
+            rejectUnauthorized: false
+        };
+
+        console.log("chamando /pagamento/step2/ ", parsedCredential);
+        const response = await fetch('/pagamento/step2/'+id, requestOptions);
+        const jsonResponse = await response.json();
+        
+        addLogContent(jsonResponse);
+        //enableButton("btnExecutarTransacao");
+    } catch (e) {
+        addLogContent(e);
+    }
 }
