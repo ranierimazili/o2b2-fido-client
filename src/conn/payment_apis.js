@@ -383,7 +383,7 @@ export const authoriseConsent = async function(token, enrollment, paymentConsent
 
     try {
         const response = await axios(endpoint, requestOptions);
-        return [ response.status == 201, decodeJwt(response.data).data ];
+        return [ response.status == 204, "Consentimento autorizado" ];
     } catch (error) {
         return [ false, error ];
     }

@@ -136,7 +136,6 @@ router.post('/vincularDispositivo/step3/:id', async (req, res) => {
     }
     
     res.status(200).send(responses);
-    
 });
 
 //Fazer este método para mandar o fido registration para o servidor fido
@@ -169,23 +168,6 @@ router.post('/pagamento/step1/:id', async (req, res) => {
     db.save(req.params.id, data);
 
     res.status(200).send(responses);
-
-
-    /*let success, rtToken, fidoRegistratration, responses = [];
-
-    //Consulta o well-known para utilizar as rotas de token, dcr, par, etc, nas chamadas futuras.
-    const openIDDiscoveryDocument = await utils.getOpenIDDiscoveryDocument();
-
-    [ success , rtToken ] = await authServer.createRTToken(data.dcr, openIDDiscoveryDocument?.mtls_endpoint_aliases?.token_endpoint || openIDDiscoveryDocument.token_endpoint, data.refresh_token.refresh_token);
-    responses.push(utils.createResponseMessage("Obtendo refresh_token no authorization server...", JSON.stringify(rtToken, null, 2), success));
-
-    if (success) {
-        [ success , fidoRegistratration ] = await paymentApis.createFidoRegistration(rtToken.access_token, data.enrollment, req.body);
-        responses.push(utils.createResponseMessage("Registrando dispositivo no servidor FIDO...", JSON.stringify(fidoRegistratration, null, 2), success));
-    }
-    
-    res.status(200).send(responses);*/
-    
 });
 
 router.post('/pagamento/step2/:id', async (req, res) => {
@@ -207,24 +189,6 @@ router.post('/pagamento/step2/:id', async (req, res) => {
     }
 
     res.status(200).send(responses);
-    /*
-    if (success) {
-        [ success , paymentConsent ] = await paymentApis.createPaymentConsent(ccToken.access_token);
-        responses.push(utils.createResponseMessage("Criando consentimento de pagamento...", JSON.stringify(paymentConsent, null, 2), success));
-    }
-
-    //FIDO sign options
-    if (success) {
-        [ success , fidoSignOptions ] = await paymentApis.getFidoSignOptions(ccToken.access_token, enrollment, req.body.platform);
-        responses.push(utils.createResponseMessage("Obtendo FIDO Sign Options no servidor FIDO...", JSON.stringify(fidoSignOptions, null, 2), success));
-    }
-
-    res.status(200).send(responses);
-    */
-
-
-    
-    
 });
 
 export default router;
