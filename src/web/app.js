@@ -1,4 +1,4 @@
-let id, authWindow;
+let id, authWindow, enrollmentDetails;
 
 const mobileOS = {
     android() {
@@ -13,7 +13,6 @@ function getPlatform() {
     // Check if navigator.userAgentData is available
     if (navigator.userAgentData) {
         const isMobile = navigator.userAgentData.mobile;
-        //const brands = navigator.userAgentData.brands;
 
         if (isMobile) {
             if (mobileOS.android()) {
@@ -21,13 +20,6 @@ function getPlatform() {
             } else {
                 return 'IOS';
             }
-            /*for (let i = 0; i < brands.length; i++) {
-                if (brands[i].brand === 'Android') {
-                    return 'ANDROID';
-                } else if (brands[i].brand === 'Apple') {
-                    return 'IOS';
-                }
-            }*/
         } else {
             return 'BROWSER';
         }
@@ -271,8 +263,15 @@ async function vincularDispositivoStep1() {
         const jsonResponse = await response.json();
         addLogContent(jsonResponse);
 
-        authWindow = window.open(jsonResponse[jsonResponse.length-1].redirect, '_blank');
-        vincularDispositivoStep2();
+        if (getPlatform() == "IOS") {
+            let anchor = document.getElementById("anchorRedirectManual");
+            anchor.innerHTML = "Redirect Manual";
+            anchor.href = jsonResponse[jsonResponse.length-1].redirect;
+            vincularDispositivoStep2();
+        } else {
+            authWindow = window.open(jsonResponse[jsonResponse.length-1].redirect, '_blank');
+            vincularDispositivoStep2();
+        }
         
     } catch (e) {
         addLogContent(e);
@@ -300,9 +299,17 @@ async function vincularDispositivoStep2() {
         if (jsonResponse.length == 1 && jsonResponse[0].success == false) {
             setTimeout(vincularDispositivoStep2, 5000);
         } else {
-            authWindow.close();
-            setTimeout(function() { solicitarAutenticacaoParaVinculo(JSON.parse(jsonResponse[jsonResponse.length-1].details)) }, 2000);
-            
+            if (getPlatform() == "IOS") {
+                let anchor = document.getElementById("anchorRedirectManual");
+                enrollmentDetails = JSON.parse(jsonResponse[jsonResponse.length-1].details);
+                let methodCall = "javascript:solicitarAutenticacaoParaVinculo(enrollmentDetails)";
+                anchor.target = "_self";
+                anchor.innerHTML = "Finalizar Vínculo";
+                anchor.href = methodCall;
+            } else {
+                authWindow.close();
+                setTimeout(function() { solicitarAutenticacaoParaVinculo(JSON.parse(jsonResponse[jsonResponse.length-1].details)) }, 2000);
+            }
         }
     } catch (e) {
         addLogContent(e);
