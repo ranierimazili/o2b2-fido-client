@@ -1,19 +1,33 @@
 let id, authWindow;
 
+const mobileOS = {
+    android() {
+      return /Android/i.test(navigator.userAgent);
+    },
+    iOS() {
+      return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    },
+};
+
 function getPlatform() {
     // Check if navigator.userAgentData is available
     if (navigator.userAgentData) {
         const isMobile = navigator.userAgentData.mobile;
-        const brands = navigator.userAgentData.brands;
+        //const brands = navigator.userAgentData.brands;
 
         if (isMobile) {
-            for (let i = 0; i < brands.length; i++) {
+            if (mobileOS.android()) {
+                return 'ANDROID';
+            } else {
+                return 'IOS';
+            }
+            /*for (let i = 0; i < brands.length; i++) {
                 if (brands[i].brand === 'Android') {
                     return 'ANDROID';
                 } else if (brands[i].brand === 'Apple') {
                     return 'IOS';
                 }
-            }
+            }*/
         } else {
             return 'BROWSER';
         }
